@@ -15,10 +15,12 @@ def bouncing_ball_restitution(g, e, vy):
         "Touch screen: pinch/extend to zoom, swipe or two-finger rotate."
     )
 
-    # Draw the sphere and floor
+    # Draw the sphere and disk
     ball = sphere(pos=r0, radius=R, color=color.red)
     ball.velocity = v0
-    floor = box(pos=vector(0, -8, 0), length=20, height=0.5, width=4, color=color.blue)
+
+    # Create a disk-shaped surface using a cylinder
+    floor = cylinder(pos=vector(0, -8, 0), axis=vector(0, 0.01, 0), radius=10, color=color.blue)
 
     # Physical parameters
     Fg = m * vector(0.0, -g, 0.0)
@@ -27,20 +29,27 @@ def bouncing_ball_restitution(g, e, vy):
     t_f = 10
     frequency = 100
 
+    # Define rotation speed for the disk
+    rotation_speed = 2 * pi / 2  # Rotations per second (e.g., 1 rotation every 2 seconds)
+
     # Simulation loop
     while time < t_f:
         # Calculate acceleration
         ball.accel = Fg / m
 
         # Handle collision
-        overlap = ball.pos.y - R - floor.pos.y - floor.height / 2
-        if overlap > 0:  # Ball is not in contact with the floor
+        overlap = ball.pos.y - R - floor.pos.y
+        if overlap > 0:  # Ball is not in contact with the disk
             ball.velocity = ball.velocity + ball.accel * dt
-        else:  # Collision with floor
+        else:  # Collision with the disk
             ball.velocity.y = -e * ball.velocity.y
 
         # Update position
         ball.pos = ball.pos + ball.velocity * dt
+
+        # Rotate the disk around the Z-axis
+        angle = rotation_speed * time
+        floor.up = vector(cos(angle), sin(angle), 0)  # Change the orientation around Z-axis
 
         # Manage simulation speed
         rate(frequency)
