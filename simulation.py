@@ -18,7 +18,7 @@ def ball_on_rotating_disk(g, rotation_speed):
     # Time parameters
     time = 0
     dt = 0.01
-    t_f = 10
+    t_f = 100
     frequency = 100
 
     # Simulation loop
@@ -41,3 +41,6 @@ def ball_on_rotating_disk(g, rotation_speed):
 
 # Call the function with gravitational acceleration and rotation speed
 ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2)
+
+
+
