@@ -12,7 +12,7 @@ particle = sphere(pos=vec(-200, 0, 0), radius=10, color=color.yellow, make_trail
 velocity = vec(0.1, 0, 0)
 dt = 0.1
 
-while particle.pos.x < 400:
+while particle.pos.x < 800:
     rate(30)
     particle.pos += particle.pos + velocity*dt
 
