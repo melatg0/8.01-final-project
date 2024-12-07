@@ -1,6 +1,6 @@
 from vpython import *
 
-def ball_on_rotating_disk(g, rotation_speed):
+def ball_on_rotating_disk(g, rotation_speed, ball_mass):
     # Set up the scene
     scene = canvas()
     scene.caption = (
@@ -29,9 +29,29 @@ def ball_on_rotating_disk(g, rotation_speed):
 
         # Update the ball's position to stay on the disk
         # Calculate the new position of the ball based on the rotation
-        x_new = floor.radius * cos(rotation_speed * time)
-        z_new = floor.radius * sin(rotation_speed * time)
-        ball.pos = vector(x_new, ball.pos.y, z_new)  # Update ball's position
+        #x_new = floor.radius * cos(rotation_speed * time)
+        #z_new = floor.radius * sin(rotation_speed * time)
+        #ball.pos = vector(x_new, ball.pos.y, z_new)  # Update ball's position
+
+        # Update ball's position based on the net force acting upon it;
+        # We are defining net force to be centripetal force + gravity
+
+        Fg = vector(0, -g, 0)
+        # Calculating centripetal force requires tangential velocity; Assuming the ball
+        # is traveling at the same rotational speed as the disk, we can convert
+        # the ball's rotation speed into its tangential velocity:
+        tan_velocity = floor.radius * rotation_speed # tangential velocity is in theta-hat dir.
+        ball.velocity = vector(0, tan_velocity, 0) # ****will likely need to be changed
+        Fc = -ball_mass * ((tan_velocity) ** 2)/floor.radius # radial force
+        Fcx = vector(Fc * cos(angle), 0, 0)
+        Fcy = vector(0, Fc * sin(angle), 0)
+        Fnet = Fg + Fcx + Fcy
+
+        ball.accel = Fnet/ball_mass
+
+        ball.velocity = ball.velocity + ball.accel*dt
+        ball.pos = ball.pos + ball.velocity*dt
+
 
         # Manage simulation speed
         rate(frequency)
@@ -40,7 +60,7 @@ def ball_on_rotating_disk(g, rotation_speed):
         time += dt
 
 # Call the function with gravitational acceleration and rotation speed
-ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2)
+ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2, ball_mass=1)
 
 
 
