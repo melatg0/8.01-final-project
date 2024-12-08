@@ -13,7 +13,7 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
     floor = cylinder(pos=vector(0, -8, 0), axis=vector(0, 0.01, 0), radius=10, color=color.blue)
 
     # Create the ball and set its initial position
-    ball = sphere(pos=vector(floor.radius, -7, 0), radius=1, color=color.red)
+    ball = sphere(pos=vector(floor.radius, -7, 0), radius=1, color=color.red, make_trail=True)
 
     # Time parameters
     time = 0
@@ -36,16 +36,20 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
         # Update ball's position based on the net force acting upon it;
         # We are defining net force to be centripetal force + gravity
 
-        Fg = vector(0, -g, 0)
+        Fg = vector(0, 0, -ball_mass*g)
         # Calculating centripetal force requires tangential velocity; Assuming the ball
         # is traveling at the same rotational speed as the disk, we can convert
         # the ball's rotation speed into its tangential velocity:
-        tan_velocity = floor.radius * rotation_speed # tangential velocity is in theta-hat dir.
+        '''tan_velocity = floor.radius * rotation_speed # tangential velocity is in theta-hat dir.
         ball.velocity = vector(0, tan_velocity, 0) # ****will likely need to be changed
         Fc = -ball_mass * ((tan_velocity) ** 2)/floor.radius # radial force
         Fcx = vector(Fc * cos(angle), 0, 0)
         Fcy = vector(0, Fc * sin(angle), 0)
-        Fnet = Fg + Fcx + Fcy
+        Fnet = Fg + Fcx + Fcy'''
+        rotation_speed_vec = vec(0, 0, rotation_speed)
+        ball.velocity = cross(rotation_speed_vec, ball.axis)
+        Fc = ball_mass * cross(ball.velocity, rotation_speed_vec)
+        Fnet = Fc+Fg
 
         ball.accel = Fnet/ball_mass
 
@@ -60,7 +64,7 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
         time += dt
 
 # Call the function with gravitational acceleration and rotation speed
-ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2, ball_mass=1)
+ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2, ball_mass=0.1)
 
 
 
