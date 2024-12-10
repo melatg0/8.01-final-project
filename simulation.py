@@ -9,79 +9,53 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
         "Touch screen: pinch/extend to zoom, swipe or two-finger rotate."
     )
 
-    # Create the rotating disk (initially not rotated)
+    # Create the rotating disk
     floor = cylinder(pos=vector(0, -8, 0), axis=vector(0, 0.01, 0), radius=10, color=color.blue)
 
     # Create the ball and set its initial position
-    # Position the ball on the perimeter of the disk.
-    # We'll place it at (floor.radius, -8, 0) so it's horizontally at the edge.
-    ball = sphere(pos=vector(floor.radius, -8, 0), radius=1, color=color.red, make_trail=True)
+    ball = sphere(pos=vector(floor.radius, -7, 0), radius=1, color=color.red, make_trail=True)
 
     # Time parameters
     time = 0
-    dt = 0.001
-    t_f = 10  # simulate for 10 seconds
-    frequency = 1/dt
+    dt = 0.01
+    t_f = 100
+    frequency = 100
 
-    # Angular velocity vector of the disk (about the y-axis)
-    rotation_speed_vec = vector(0, rotation_speed, 0)
-
-    # Radius vector from the disk center to the ball:
-    r_vector = ball.pos - floor.pos  # vector from center of disk to ball
-
-    # Initial tangential velocity: v = ω × r
-    tan_vel = cross(rotation_speed_vec, r_vector)
-
-    # If you want to see what happens with a vertical component, uncomment below:
-    # tan_vel += vector(0,1,0)  # add a vertical "kick"
-
-    # Assign initial velocity to the ball
-    ball.velocity = tan_vel
-
-    # Define gravity vector
-    g_vec = vector(0, -g, 0)
-
-    # Initially, we consider centripetal force only. After first step, we add gravity.
-    # Centripetal force is directed towards center: Fc = -m * v^2 / r * r_hat
-    # where r_hat is the unit vector pointing from ball to center.
-    # But since the ball should initially be in uniform circular motion,
-    # we can start with that assumption and then let gravity perturb it.
-
+    # Simulation loop
     while time < t_f:
-        # Rotate the disk about its center
-        angle = rotation_speed * dt
-        floor.rotate(angle=angle, axis=vector(0,1,0), origin=floor.pos)
+        # Rotate the disk about its center of mass (COM)
+        angle = rotation_speed * dt  # Incremental rotation angle
+        floor.rotate(angle=angle, axis=vector(0, 1, 0), origin=floor.pos)
 
-        # STEP 1: Update forces and motion
+        # Update the ball's position to stay on the disk
+        # Calculate the new position of the ball based on the rotation
+        #x_new = floor.radius * cos(rotation_speed * time)
+        #z_new = floor.radius * sin(rotation_speed * time)
+        #ball.pos = vector(x_new, ball.pos.y, z_new)  # Update ball's position
 
-        # Recompute radius vector each iteration (in case position changes)
-        r_vector = ball.pos - floor.pos
-        r_mag = mag(r_vector)
-        r_hat = r_vector / r_mag
+        # Update ball's position based on the net force acting upon it;
+        # We are defining net force to be centripetal force + gravity
 
-        # Ball speed and velocity magnitude
-        v_mag = mag(ball.velocity)
+        Fg = vector(0, 0, -ball_mass*g)
+        # Calculating centripetal force requires tangential velocity; Assuming the ball
+        # is traveling at the same rotational speed as the disk, we can convert
+        # the ball's rotation speed into its tangential velocity:
+        '''tan_velocity = floor.radius * rotation_speed # tangential velocity is in theta-hat dir.
+        ball.velocity = vector(0, tan_velocity, 0) # ****will likely need to be changed
+        Fc = -ball_mass * ((tan_velocity) ** 2)/floor.radius # radial force
+        Fcx = vector(Fc * cos(angle), 0, 0)
+        Fcy = vector(0, Fc * sin(angle), 0)
+        Fnet = Fg + Fcx + Fcy'''
+        rotation_speed_vec = vec(0, 0, rotation_speed)
+        ball.velocity = cross(rotation_speed_vec, ball.axis)
+        Fc = ball_mass * cross(ball.velocity, rotation_speed_vec)
+        Fnet = Fc+Fg
 
-        # Compute centripetal force to maintain circular motion:
-        # Fc should point towards the center (negative r_hat)
-        # Fc = -m (v²/r) r_hat
-        Fc = -ball_mass * (v_mag**2 / r_mag) * r_hat
+        ball.accel = Fnet/ball_mass
 
-        # Gravity force
-        Fg = ball_mass * g_vec
+        ball.velocity = ball.velocity + ball.accel*dt
+        ball.pos = ball.pos + ball.velocity*dt
 
-        # Net force
-        Fnet = Fc + Fg
-
-        # If you want to add other forces (like lift), you can do it here:
-        # For example, a small upward "lift" force:
-        # Flift = vector(0, 0.05, 0)
-        # Fnet = Fc + Fg + Flift
-
-        # STEP 2: Update motion
-        ball.accel = Fnet / ball_mass
-        ball.velocity = ball.velocity + ball.accel * dt
-        ball.pos = ball.pos + ball.velocity * dt
 
         # Manage simulation speed
         rate(frequency)
@@ -89,7 +63,8 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
         # Update time
         time += dt
 
-
 # Call the function with gravitational acceleration and rotation speed
-# Here, rotation_speed = 2π/2 means one full rotation every 2 seconds.
-ball_on_rotating_disk(g=9.8, rotation_speed=2*pi/2, ball_mass=0.1)
+ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2, ball_mass=0.1) # change mass to be something smaller
+
+
+
