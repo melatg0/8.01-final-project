@@ -1,6 +1,6 @@
 from vpython import *
 
-def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles=10):
+def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles):
     # Set up the scene
     scene = canvas()
     scene.caption = (
@@ -33,7 +33,7 @@ def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles
         z_pos = floor.radius * sin(angle)
         # Each particle will be placed at a different position around the circumference
         # at the same vertical level (-8 on y-axis)
-        particle = sphere(pos=vector(x_pos, -8, z_pos), radius=1, color=color.red)#, make_trail=True)
+        particle = sphere(pos=vector(x_pos, 0, z_pos), radius=1, color=color.red)#, make_trail=True)
 
         # Initial tangential velocity: v = ω × r
         r_vector = particle.pos - floor.pos
@@ -88,6 +88,13 @@ def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles
         rate(frequency)
         time += dt
 
+def user_input(): 
+    global omega, ball_mass, num_particles
+    omega = float(input("What is the wind speed/rotation speed of your tornado? "))
+    ball_mass = float(input("What is the mass of your air particle? "))
+    num_particles = int(input("How many air particles per layer would you like? "))
+
+
 def print_stats(accel, vel, v_mag, pos):
     print(f"Acceleration Vector: {accel} m/s^2")
     print(f"Velocity Magnitude: {v_mag} m/s")
@@ -97,7 +104,14 @@ def print_stats(accel, vel, v_mag, pos):
 
 # Parameters chosen:
 # g = 9.8 m/s²
-# rotation_speed = 0.5 rad/s (about 50 m/s at 100 m radius)
+# rotation_speed = 0.5 rad/s (about 50 m/s at 100 m radius) --> can vary!
 # ball_mass = 0.001 kg (1 gram of air)
 # num_particles = 10 (adjust this as desired)
-multi_particles_on_rotating_disk(g=9.8, rotation_speed=0.5, ball_mass=0.001, num_particles=10)
+
+# version for testing
+multi_particles_on_rotating_disk(g=9.8, rotation_speed=2, ball_mass=0.001, num_particles=10)
+
+# version with user input
+# user_input()
+# multi_particles_on_rotating_disk(9.8, omega, ball_mass, num_particles)
+
