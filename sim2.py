@@ -15,7 +15,7 @@ def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles
     # Time parameters
     time = 0
     dt = 0.001
-    t_f = 100  # simulate for 10 seconds
+    t_f = 10  # simulate for 10 seconds TODO: change back to 100 seconds
     frequency = 1/dt
 
     # Angular velocity vector of the disk (about the y-axis)
@@ -33,7 +33,7 @@ def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles
         z_pos = floor.radius * sin(angle)
         # Each particle will be placed at a different position around the circumference
         # at the same vertical level (-8 on y-axis)
-        particle = sphere(pos=vector(x_pos, -8, z_pos), radius=1, color=color.red, make_trail=True)
+        particle = sphere(pos=vector(x_pos, -8, z_pos), radius=1, color=color.red)#, make_trail=True)
 
         # Initial tangential velocity: v = ω × r
         r_vector = particle.pos - floor.pos
@@ -73,16 +73,27 @@ def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles
             Flift = -Fg
 
             # Net force
-            Fnet = Fc + Fg + Flift
+            Fnet = Fc + Fg + Flift # Fg and Flift cancels out
 
             # Update motion
             accel = Fnet / ball_mass
             particle.velocity = particle.velocity + accel * dt
             particle.pos = particle.pos + particle.velocity * dt
 
+            # Print motion statistics in terminal
+            if abs(time - round(time)) < 1e-9:
+                print_stats(accel, particle.velocity, v_mag, particle.pos)
+
         # Manage simulation speed
         rate(frequency)
         time += dt
+
+def print_stats(accel, vel, v_mag, pos):
+    print(f"Acceleration Vector: {accel} m/s^2")
+    print(f"Velocity Magnitude: {v_mag} m/s")
+    print(f"Velocity Vector: {vel} m/s")
+    print(f"Ball Position: {pos} m")
+    print("----------------------------------------------------")
 
 # Parameters chosen:
 # g = 9.8 m/s²
