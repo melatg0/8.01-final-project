@@ -1,6 +1,6 @@
 from vpython import *
 
-def ball_on_rotating_disk(g, rotation_speed, ball_mass):
+def multi_particles_on_rotating_disk(g, rotation_speed, ball_mass, num_particles):
     # Set up the scene
     scene = canvas()
     scene.caption = (
@@ -10,61 +10,107 @@ def ball_on_rotating_disk(g, rotation_speed, ball_mass):
     )
 
     # Create the rotating disk
-    floor = cylinder(pos=vector(0, -8, 0), axis=vector(0, 0.01, 0), radius=10, color=color.blue)
-
-    # Create the ball and set its initial position
-    ball = sphere(pos=vector(floor.radius, -7, 0), radius=1, color=color.red, make_trail=True)
+    floor = cylinder(pos=vector(0, -8, 0), axis=vector(0, 0.01, 0), radius=100, color=color.blue)
 
     # Time parameters
     time = 0
-    dt = 0.01
-    t_f = 100
-    frequency = 100
+    dt = 0.001
+    t_f = 10  # simulate for 10 seconds TODO: change back to 100 seconds
+    frequency = 1/dt
 
-    # Simulation loop
+    # Angular velocity vector of the disk (about the y-axis)
+    rotation_speed_vec = vector(0, rotation_speed, 0)
+
+    # Gravity vector
+    g_vec = vector(0, -g, 0)
+
+    # Number of particles
+    # We'll spread them evenly around the circle
+    particles = []
+    for i in range(num_particles):
+        angle = 2 * pi * i / num_particles
+        x_pos = floor.radius * cos(angle)
+        z_pos = floor.radius * sin(angle)
+        # Each particle will be placed at a different position around the circumference
+        # at the same vertical level (-8 on y-axis)
+        particle = sphere(pos=vector(x_pos, 0, z_pos), radius=1, color=color.red)#, make_trail=True)
+
+        # Initial tangential velocity: v = ω × r
+        r_vector = particle.pos - floor.pos
+        tan_vel = cross(rotation_speed_vec, r_vector)
+
+        # Add a vertical upward velocity component
+        tan_vel += vector(0,10,0) # Initial upward "kick"
+
+        particle.velocity = tan_vel
+        
+        # Store particle data
+        particles.append(particle)
+
     while time < t_f:
-        # Rotate the disk about its center of mass (COM)
-        angle = rotation_speed * dt  # Incremental rotation angle
-        floor.rotate(angle=angle, axis=vector(0, 1, 0), origin=floor.pos)
+        # Rotate the disk about its center
+        angle = rotation_speed * dt
+        floor.rotate(angle=angle, axis=vector(0,1,0), origin=floor.pos)
 
-        # Update the ball's position to stay on the disk
-        # Calculate the new position of the ball based on the rotation
-        #x_new = floor.radius * cos(rotation_speed * time)
-        #z_new = floor.radius * sin(rotation_speed * time)
-        #ball.pos = vector(x_new, ball.pos.y, z_new)  # Update ball's position
+        for particle in particles:
+            # Update forces and motion for each particle
 
-        # Update ball's position based on the net force acting upon it;
-        # We are defining net force to be centripetal force + gravity
+            # Recompute radius vector each iteration
+            r_vector = particle.pos - floor.pos
+            r_mag = mag(r_vector)
+            r_hat = r_vector / r_mag
 
-        Fg = vector(0, 0, -ball_mass*g)
-        # Calculating centripetal force requires tangential velocity; Assuming the ball
-        # is traveling at the same rotational speed as the disk, we can convert
-        # the ball's rotation speed into its tangential velocity:
-        '''tan_velocity = floor.radius * rotation_speed # tangential velocity is in theta-hat dir.
-        ball.velocity = vector(0, tan_velocity, 0) # ****will likely need to be changed
-        Fc = -ball_mass * ((tan_velocity) ** 2)/floor.radius # radial force
-        Fcx = vector(Fc * cos(angle), 0, 0)
-        Fcy = vector(0, Fc * sin(angle), 0)
-        Fnet = Fg + Fcx + Fcy'''
-        rotation_speed_vec = vec(0, 0, rotation_speed)
-        ball.velocity = cross(rotation_speed_vec, ball.axis)
-        Fc = ball_mass * cross(ball.velocity, rotation_speed_vec)
-        Fnet = Fc+Fg
+            # Particle speed and velocity magnitude
+            v_mag = mag(particle.velocity)
 
-        ball.accel = Fnet/ball_mass
+            # Centripetal force
+            Fc = -ball_mass * (v_mag**2 / r_mag) * r_hat
 
-        ball.velocity = ball.velocity + ball.accel*dt
-        ball.pos = ball.pos + ball.velocity*dt
+            # Gravity force
+            Fg = ball_mass * g_vec
 
+            # Lift force equal to -Fg to cancel gravity
+            Flift = -Fg
+
+            # Net force
+            Fnet = Fc + Fg + Flift # Fg and Flift cancels out
+
+            # Update motion
+            accel = Fnet / ball_mass
+            particle.velocity = particle.velocity + accel * dt
+            particle.pos = particle.pos + particle.velocity * dt
+
+            # Print motion statistics in terminal
+            if abs(time - round(time)) < 1e-9:
+                print_stats(accel, particle.velocity, v_mag, particle.pos)
 
         # Manage simulation speed
         rate(frequency)
-
-        # Update time
         time += dt
 
-# Call the function with gravitational acceleration and rotation speed
-ball_on_rotating_disk(g=9.8, rotation_speed=2 * pi / 2, ball_mass=0.1) # change mass to be something smaller
+def user_input(): 
+    global omega, ball_mass, num_particles
+    omega = float(input("What is the wind speed/rotation speed of your tornado? "))
+    ball_mass = float(input("What is the mass of your air particle? "))
+    num_particles = int(input("How many air particles per layer would you like? "))
 
 
+def print_stats(accel, vel, v_mag, pos):
+    print(f"Acceleration Vector: {accel} m/s^2")
+    print(f"Velocity Magnitude: {v_mag} m/s")
+    print(f"Velocity Vector: {vel} m/s")
+    print(f"Ball Position: {pos} m")
+    print("----------------------------------------------------")
 
+# Parameters chosen:
+# g = 9.8 m/s²
+# rotation_speed = 0.5 rad/s (about 50 m/s at 100 m radius) --> can vary!
+# ball_mass = 0.001 kg (1 gram of air)
+# num_particles = 10 (adjust this as desired)
+
+# version for testing
+multi_particles_on_rotating_disk(g=9.8, rotation_speed=2, ball_mass=0.001, num_particles=10)
+
+# version with user input
+# user_input()
+# multi_particles_on_rotating_disk(9.8, omega, ball_mass, num_particles)
